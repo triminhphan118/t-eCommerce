@@ -1,0 +1,12 @@
+@url_dev=http://localhost:4000/v1/api
+
+### singUp
+POST {{url_dev}}/ 
+Content-Type: application/json
+x-api-key: f6d0b8c699079ff60632cbac4fb05008af025a6de4835d863fccdb2d32d87a3643bf6351081512ddab15cf2e2d1db5df8e2325e6d199220c23fac0d67a936c2a
+
+{
+    "name": "Test Test ",
+    "email": "tes322@gmail.com",
+    "password": "123456"
+}
