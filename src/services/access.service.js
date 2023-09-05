@@ -17,30 +17,24 @@ const RoleShop = {
 }
 
 class AccessService {
-    static handleRefreshToken = async (refreshToken) => {
-        const foundToken = await KeyStoreService.findByRefreshTokenUsed(refreshToken)
-        if (foundToken) {
-            // decode to get user
-            const { userId, email } = await verifyJWT(refreshToken, foundToken.privateKey)
-            console.log({ userId, email });
+    static handleRefreshToken = async ({ refreshToken, user, keyStore }) => {
+        console.log("[user]::", user);
+        const { userId, email } = user;
+        if (keyStore.refreshTokenUsed.includes(refreshToken)) {
             // delete user
             await KeyStoreService.deleteKeyStoreByUser(userId)
             throw new ForbiddenError('Something wrong happen !!. Pls relogin!')
         }
 
-        const holderToken = await KeyStoreService.findByRefreshToken(refreshToken)
-        if (!holderToken) throw new BadRequestError("Shop not registered!")
-
-        const { userId, email } = await verifyJWT(refreshToken, holderToken.privateKey)
-        console.log('[2]--', { userId, email });
+        if (keyStore.refreshToken !== refreshToken) throw new BadRequestError("Shop not registered!")
 
         const foundShop = findByEmail({ email })
         if (!foundShop) throw new BadRequestError("Shop not registered!")
 
         // create token
-        const tokens = await createTokenPair({ userId: foundShop._id, email }, holderToken.publicKey, holderToken.privateKey)
-
-        await holderToken.updateOne({
+        const tokens = await createTokenPair({ userId: foundShop._id, email }, keyStore.publicKey, keyStore.privateKey)
+        console.log("keyStore::", keyStore)
+        await keyStore.updateOne({
             $set: {
                 refreshToken: tokens.refreshToken
             },
@@ -70,7 +64,7 @@ class AccessService {
         const privateKey = await crypto.randomBytes(64).toString("hex")
 
         const tokens = await createTokenPair({ userId: foundShop._id, email }, publicKey, privateKey)
-        await await KeyStoreService.createKeyToken({
+        await KeyStoreService.createKeyToken({
             userId: foundShop._id,
             publicKey,
             privateKey,

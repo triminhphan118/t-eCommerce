@@ -26,7 +26,7 @@ const productSchema = new mongoose.Schema({
     },
     product_type: {
         type: String,
-        enum: ['Electronics', 'Clothing', 'Furniture']
+        enum: ['Electronic', 'Clothing', 'Furniture']
     },
     product_shop: {
         type: mongoose.Schema.Types.ObjectId,
@@ -47,7 +47,11 @@ const clothingSChema = new mongoose.Schema({
         require: true
     },
     size: String,
-    material: String
+    material: String,
+    product_shop: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Shop'
+    },
 }, {
     timestamps: true,
     collection: 'Clothes'
@@ -59,9 +63,29 @@ const electronicSchema = new mongoose.Schema({
         require: true
     },
     model: String,
-    color: String
+    color: String,
+    product_shop: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Shop'
+    },
 }, {
     collation: 'Electronics',
+    timestamps: true
+})
+
+const furnitureSchema = new mongoose.Schema({
+    manuFacturer: {
+        type: String,
+        require: true
+    },
+    model: String,
+    color: String,
+    product_shop: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Shop'
+    },
+}, {
+    collation: 'Furnitures',
     timestamps: true
 })
 
@@ -69,5 +93,6 @@ const electronicSchema = new mongoose.Schema({
 module.exports = {
     product: mongoose.model(DOCUMENT_NAME, productSchema),
     electronic: mongoose.model('Electronic', electronicSchema),
-    clothing: mongoose.model('Clothing', clothingSChema)
+    clothing: mongoose.model('Clothing', clothingSChema),
+    furnitureSchema: mongoose.model('Furniture', furnitureSchema)
 };
