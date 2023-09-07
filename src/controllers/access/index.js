@@ -31,7 +31,6 @@ class AccessController {
     }
 
     signUp = async (req, res, next) => {
-        console.log(req.body);
         console.log(`[P]::signUp::`, req.body);
         new CREATED({
             message: "Registered Ok!",

@@ -18,7 +18,6 @@ const RoleShop = {
 
 class AccessService {
     static handleRefreshToken = async ({ refreshToken, user, keyStore }) => {
-        console.log("[user]::", user);
         const { userId, email } = user;
         if (keyStore.refreshTokenUsed.includes(refreshToken)) {
             // delete user
@@ -33,7 +32,6 @@ class AccessService {
 
         // create token
         const tokens = await createTokenPair({ userId: foundShop._id, email }, keyStore.publicKey, keyStore.privateKey)
-        console.log("keyStore::", keyStore)
         await keyStore.updateOne({
             $set: {
                 refreshToken: tokens.refreshToken
@@ -79,7 +77,6 @@ class AccessService {
 
     static signUp = async ({ name, password, email }) => {
         const holderShop = await shopModel.findOne({ email }).lean()
-        console.log("holderShop::", holderShop);
         if (holderShop) {
             throw new ConflictRequestError("Error: Shop Already registered!")
         }
@@ -117,7 +114,6 @@ class AccessService {
                 publicKey,
                 privateKey
             })
-            console.log("🚀 ~ file: access.service.js:62 ~ AccessService ~ signUp= ~ keyStore:", keyStore)
             // const publicKeyObject = crypto.createPublicKey(publicKeyString)
             if (!keyStore) {
                 return {
@@ -144,7 +140,6 @@ class AccessService {
 
     static logOut = async ({ keyStore }) => {
         const delKey = await KeyStoreService.removeKeyStoreById(keyStore._id)
-        console.log("delKey::", delKey);
         return delKey
     }
 }

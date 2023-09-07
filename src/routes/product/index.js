@@ -10,4 +10,7 @@ const productController = require('../../controllers/product')
 router.use(authentication)
 router.post('', asyncHandler(productController.create))
 
+// QUERY
+router.post('/draft/all', asyncHandler(productController.getAllDraftForShop))
+
 module.exports = router

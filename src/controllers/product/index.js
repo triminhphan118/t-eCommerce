@@ -1,6 +1,6 @@
 "use strict"
 
-const { CREATED } = require("../../core/success.response");
+const { CREATED, SuccessResponse } = require("../../core/success.response");
 const ProductFactory = require("../../services/product.service");
 
 class ProductController {
@@ -11,8 +11,18 @@ class ProductController {
             metadata: await ProductFactory.createProduct({
                 type: req.body.product_type, payload: {
                     ...req.body,
-                    product_shop: req.user._id
+                    product_shop: req.user.userId
                 }
+            })
+        }).send(res)
+    }
+
+    // QUERY
+    getAllDraftForShop = async (req, res, next) => {
+        return new SuccessResponse({
+            message: "Get all product Ok!",
+            metadata: await ProductFactory.findAllDraftForShop({
+                product_shop: req.user.userId
             })
         }).send(res)
     }
