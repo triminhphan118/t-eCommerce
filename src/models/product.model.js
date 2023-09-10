@@ -64,6 +64,11 @@ const productSchema = new mongoose.Schema({
     collection: COLLECTION_NAME
 });
 
+productSchema.index({
+    product_name: 'text',
+    product_description: 'text'
+})
+
 productSchema.pre("save", function (next) {
     this.product_slug = slugify(this.product_name, { lower: true })
     next();

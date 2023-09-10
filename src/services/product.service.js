@@ -2,7 +2,7 @@
 
 const { BadRequestError } = require('../core/error.response')
 const { product, electronic, clothing } = require('../models/product.model')
-const { findAllDraftForShop } = require('../models/repositories/product.repo')
+const { findAllDraftForShop, publishProductByShop, findAllPublishedForShop, unPublishProductByShop, searchProductByUser, getAllProduct, findProduct, updateProductById } = require('../models/repositories/product.repo')
 
 class ProductFactory {
     /**
@@ -28,6 +28,25 @@ class ProductFactory {
         // }
     }
 
+    static async updateProduct(type, product_id, payload) {
+        const productClass = ProductFactory.productRegistry[type]
+        if (!productClass) throw new BadRequestError(`Invalid Product Type::${type}`);
+        return new productClass(payload).updateProduct(product_id)
+    }
+
+    static publishProductByShop = async ({ product_shop, product_id }) => {
+        return await publishProductByShop({
+            product_id,
+            product_shop
+        })
+    }
+
+    static unPublishProductByShop = async ({ product_shop, product_id }) => {
+        return await unPublishProductByShop({
+            product_id,
+            product_shop
+        })
+    }
 
     // QUERY
     static findAllDraftForShop = async ({ product_shop, limit = 50, skip = 0 }) => {
@@ -35,6 +54,28 @@ class ProductFactory {
         return await findAllDraftForShop({
             query, limit, skip
         })
+    }
+
+    static findAllPublishedForShop = async ({ product_shop, limit = 50, skip = 0 }) => {
+        const query = { product_shop, isPublished: true }
+        return await findAllPublishedForShop({
+            query, limit, skip
+        })
+    }
+
+    static getListSearchProduct = async ({ keySearch }) => {
+        return await searchProductByUser({ keySearch })
+    }
+
+    static getAllProduct = async ({ limit = 50, sort = 'ctime', page = 1, filter = { isPublished: true },
+        select = ['product_name', 'product_description', 'product_thumb'] }) => {
+        return await getAllProduct({
+            limit, sort, page, filter, select
+        })
+    }
+
+    static findProduct = async ({ product_id, unSelect = ['__v'] }) => {
+        return await findProduct({ product_id, unSelect })
     }
 }
 
@@ -66,6 +107,15 @@ class Product {
             _id: id
         })
     }
+
+    // update product 
+    async updateProduct({ product_id, payload }) {
+        return await updateProductById({
+            model: product,
+            payload,
+            product_id
+        })
+    }
 }
 
 class Clothing extends Product {
@@ -79,6 +129,23 @@ class Clothing extends Product {
         if (!newProduct) throw new BadRequestError("Create new product error")
 
         return newProduct
+    }
+
+    async updateProduct(product_id) {
+        const objParams = this
+
+        if (objParams.product_attributes) {
+            // update attribute
+            await updateProductById({
+                model: clothing,
+                payload: objParams.product_attributes,
+                product_id
+            })
+        }
+
+        const updateProduct = await super.updateProduct({ product_id, payload: objParams })
+        return updateProduct
+
     }
 }
 
