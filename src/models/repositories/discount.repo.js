@@ -1,11 +1,9 @@
 'use strict'
-
-import { discount } from "../discount.model"
+const { discount } = require("../discount.model")
 
 const { convertToObjectIdMongo, getSelectData, unGetSelectData } = require("../../utils")
 
 const findDiscount = async ({ discount_code, discount_shopId }) => {
-
     return await discount.findOne({
         discount_code: discount_code,
         discount_shopId: convertToObjectIdMongo(discount_shopId)
@@ -30,9 +28,14 @@ const findAllDiscountCodeSelect = async ({
     return documents
 }
 
+const checkDiscountExists = async ({ model, filter }) => {
+    return await model.findOne(filter).lean()
+}
 
-export {
+
+module.exports = {
     findDiscount,
     findAllDiscountCodeUnSelect,
-    findAllDiscountCodeSelect
+    findAllDiscountCodeSelect,
+    checkDiscountExists
 }
