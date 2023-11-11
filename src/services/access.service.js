@@ -4,10 +4,10 @@ const shopModel = require("../models/shop.model")
 const bcrypt = require('bcrypt')
 const crypto = require('crypto')
 const KeyStoreService = require("./keyToken.service")
-const { createTokenPair } = require("../auth/aultUtils")
 const { getInfoData } = require("../utils")
-const { ConflictRequestError, BadRequestError, AuthFailureError } = require("../core/error.response")
+const { ConflictRequestError, BadRequestError, AuthFailureError, ForbiddenError } = require("../core/error.response")
 const { findByEmail } = require("./shop.service")
+const { createTokenPair, verifyJWT } = require("../auth/authUtils")
 
 const RoleShop = {
     SHOP: 'SHOP',
@@ -17,6 +17,36 @@ const RoleShop = {
 }
 
 class AccessService {
+    static handleRefreshToken = async ({ refreshToken, user, keyStore }) => {
+        const { userId, email } = user;
+        if (keyStore.refreshTokenUsed.includes(refreshToken)) {
+            // delete user
+            await KeyStoreService.deleteKeyStoreByUser(userId)
+            throw new ForbiddenError('Something wrong happen !!. Pls relogin!')
+        }
+
+        if (keyStore.refreshToken !== refreshToken) throw new BadRequestError("Shop not registered!")
+
+        const foundShop = findByEmail({ email })
+        if (!foundShop) throw new BadRequestError("Shop not registered!")
+
+        // create token
+        const tokens = await createTokenPair({ userId: foundShop._id, email }, keyStore.publicKey, keyStore.privateKey)
+        await keyStore.updateOne({
+            $set: {
+                refreshToken: tokens.refreshToken
+            },
+            $addToSet: {
+                refreshTokenUsed: refreshToken
+            }
+        })
+
+        return {
+            user: { userId, email },
+            tokens
+        }
+    }
+
     static logIn = async ({ email, password, refreshToken = null }) => {
         const foundShop = await findByEmail({ email })
         if (!foundShop) {
@@ -32,7 +62,7 @@ class AccessService {
         const privateKey = await crypto.randomBytes(64).toString("hex")
 
         const tokens = await createTokenPair({ userId: foundShop._id, email }, publicKey, privateKey)
-        await await KeyStoreService.createKeyToken({
+        await KeyStoreService.createKeyToken({
             userId: foundShop._id,
             publicKey,
             privateKey,
@@ -47,7 +77,6 @@ class AccessService {
 
     static signUp = async ({ name, password, email }) => {
         const holderShop = await shopModel.findOne({ email }).lean()
-        console.log("holderShop::", holderShop);
         if (holderShop) {
             throw new ConflictRequestError("Error: Shop Already registered!")
         }
@@ -85,7 +114,6 @@ class AccessService {
                 publicKey,
                 privateKey
             })
-            console.log("🚀 ~ file: access.service.js:62 ~ AccessService ~ signUp= ~ keyStore:", keyStore)
             // const publicKeyObject = crypto.createPublicKey(publicKeyString)
             if (!keyStore) {
                 return {
@@ -108,6 +136,11 @@ class AccessService {
             metadata: null
         }
 
+    }
+
+    static logOut = async ({ keyStore }) => {
+        const delKey = await KeyStoreService.removeKeyStoreById(keyStore._id)
+        return delKey
     }
 }
 
